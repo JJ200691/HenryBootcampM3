@@ -1,7 +1,5 @@
 var fs = require('fs');
 
-
-
 var promise = new Promise(function(resolve, reject) {
   // Hacer cosas acá dentro, probablemente asincrónicas.
   fs.readFile('./archivo.txt', 'utf8', function(err, data) { 

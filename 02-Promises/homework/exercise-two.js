@@ -1,15 +1,15 @@
 'use strict';
 
 var Promise = require('bluebird'),
-    async = require('async'),
-    exerciseUtils = require('./utils');
+  async = require('async'),
+  exerciseUtils = require('./utils');
 
 var readFile = exerciseUtils.readFile,
-    promisifiedReadFile = exerciseUtils.promisifiedReadFile,
-    blue = exerciseUtils.blue,
-    magenta = exerciseUtils.magenta;
+  promisifiedReadFile = exerciseUtils.promisifiedReadFile,
+  blue = exerciseUtils.blue,
+  magenta = exerciseUtils.magenta;
 
-var args = process.argv.slice(2).map(function(st){ return st.toUpperCase(); });
+var args = process.argv.slice(2).map(function (st) { return st.toUpperCase(); });
 
 module.exports = {
   problemA: problemA,
@@ -20,12 +20,12 @@ module.exports = {
 };
 
 // corre cada problema dado como un argumento del command-line para procesar
-args.forEach(function(arg){
+args.forEach(function (arg) {
   var problem = module.exports['problem' + arg];
   if (problem) problem();
 });
 
-function problemA () {
+function problemA() {
   /* * * * * * * * * * * * * * * * * * * * * * * * * * * *
    *
    * A. loggea el poema dos stanza uno y stanza dos en cualquier orden
@@ -36,25 +36,32 @@ function problemA () {
    */
 
   // callback version
-  async.each(['poem-two/stanza-01.txt', 'poem-two/stanza-02.txt'],
-    function (filename, eachDone) {
-      readFile(filename, function (err, stanza) {
-        console.log('-- A. callback version --');
-        blue(stanza);
-        eachDone();
-      });
-    },
-    function (err) {
-      console.log('-- A. callback version done --');
-    }
-  );
+  // async.each(['poem-two/stanza-01.txt', 'poem-two/stanza-02.txt'],
+  //   function (filename, eachDone) {
+  //     readFile(filename, function (err, stanza) {
+  //       console.log('-- A. callback version --');
+  //       blue(stanza);
+  //       eachDone();
+  //     });
+  //   },
+  //   function (err) {
+  //     console.log('-- A. callback version done --');
+  //   }
+  // );
 
   // promise version
   // ???
+  const one = promisifiedReadFile('poem-two/stanza-01.txt');
+  const two = promisifiedReadFile('poem-two/stanza-02.txt');
+  Promise.all([one, two])
+    .then(stanzas => {
+      blue(stanzas[0])
+      blue(stanzas[1])
+      console.log('done');
+    });
+};
 
-}
-
-function problemB () {
+function problemB() {
   /* * * * * * * * * * * * * * * * * * * * * * * * * * * *
    *
    * B. loggea todas las stanzas en poema dos, en cualquier orden y loggea
@@ -69,25 +76,29 @@ function problemB () {
   });
 
   // callback version
-  async.each(filenames,
-    function (filename, eachDone) {
-      readFile(filename, function (err, stanza) {
-        console.log('-- B. callback version --');
-        blue(stanza);
-        eachDone();
-      });
-    },
-    function (err) {
-      console.log('-- B. callback version done --');
-    }
-  );
+  // async.each(filenames,
+  //   function (filename, eachDone) {
+  //     readFile(filename, function (err, stanza) {
+  //       console.log('-- B. callback version --');
+  //       blue(stanza);
+  //       eachDone();
+  //     });
+  //   },
+  //   function (err) {
+  //     console.log('-- B. callback version done --');
+  //   }
+  // );
 
   // promise version
   // ???
+  const allStanzas = filenames.map(file => promisifiedReadFile(file).then(st => blue(st)));
+  Promise.all(allStanzas)
+    .then(() => {
+      console.log('done')
+    });
+};
 
-}
-
-function problemC () {
+function problemC() {
   /* * * * * * * * * * * * * * * * * * * * * * * * * * * *
    *
    * C. Lee y loggea todas las stanzas en el poema dos, *en orden* y
@@ -103,25 +114,34 @@ function problemC () {
   });
 
   // callback version
-  async.eachSeries(filenames,
-    function (filename, eachDone) {
-      readFile(filename, function (err, stanza) {
-        console.log('-- C. callback version --');
-        blue(stanza);
-        eachDone();
-      });
-    },
-    function (err) {
-      console.log('-- C. callback version done --');
-    }
-  );
+  // async.eachSeries(filenames,
+  //   function (filename, eachDone) {
+  //     readFile(filename, function (err, stanza) {
+  //       console.log('-- C. callback version --');
+  //       blue(stanza);
+  //       eachDone();
+  //     });
+  //   },
+  //   function (err) {
+  //     console.log('-- C. callback version done --');
+  //   }
+  // );
 
   // promise version
   // ???
+  filenames.reduce((promise, file) => {
+    return promise.then((stanza) => {
+      if (stanza) blue(stanza);
+      return promisifiedReadFile(file)
+    });
+  }, Promise.resolve(false)) //Se setea el valor inicial del acumulador(promise)
+    .then(stanza => {
+      blue(stanza)
+      console.log('done');
+    });
+};
 
-}
-
-function problemD () {
+function problemD() {
   /* * * * * * * * * * * * * * * * * * * * * * * * * * * *
    *
    * D. loggea todas las stanzas en el poema dos *en orden* asegurandote
@@ -139,27 +159,41 @@ function problemD () {
   filenames[randIdx] = 'wrong-file-name-' + (randIdx + 1) + '.txt';
 
   // callback version
-  async.eachSeries(filenames,
-    function (filename, eachDone) {
-      readFile(filename, function (err, stanza) {
-        console.log('-- D. callback version --');
-        if (err) return eachDone(err);
-        blue(stanza);
-        eachDone();
-      });
-    },
-    function (err) {
-      if (err) magenta(new Error(err));
-      console.log('-- D. callback version done --');
-    }
-  );
+  // async.eachSeries(filenames,
+  //   function (filename, eachDone) {
+  //     readFile(filename, function (err, stanza) {
+  //       console.log('-- D. callback version --');
+  //       if (err) return eachDone(err);
+  //       blue(stanza);
+  //       eachDone();
+  //     });
+  //   },
+  //   function (err) {
+  //     if (err) magenta(new Error(err));
+  //     console.log('-- D. callback version done --');
+  //   }
+  // );
 
   // promise version
   // ???
+  filenames.reduce((promise, file) => {
+    return promise.then((stanza) => {
+      if (stanza) blue(stanza);
+      return promisifiedReadFile(file)
+    });
+  }, Promise.resolve(false)) //Se setea el valor inicial del acumulador(promise)
+    .then(stanza => {
+      blue(stanza)
+    })
+    .catch(err => {
+      magenta(new Error(err))
+    })
+    .finally(() => {
+      console.log('done');
+    });
+};
 
-}
-
-function problemE () {
+function problemE() {
   /* * * * * * * * * * * * * * * * * * * * * * * * * * * *
    *
    * E. Haz una versión promisificada de fs.writeFile
@@ -167,7 +201,7 @@ function problemE () {
    */
 
   var fs = require('fs');
-  function promisifiedWriteFile (filename, str) {
+  function promisifiedWriteFile(filename, str) {
     // tu código aquí
   }
 }
