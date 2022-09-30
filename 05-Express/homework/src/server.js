@@ -138,5 +138,4 @@ server.delete('/author', (req, res) => {
     };
 });
 
-
 module.exports = { posts, server };
